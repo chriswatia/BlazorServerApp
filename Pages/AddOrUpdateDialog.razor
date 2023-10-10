@@ -1,0 +1,29 @@
+﻿@using BlazorServerApp.Data
+@inject BlazorServerApp.Services.IStudentService studentService
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="student.Name" Label="Student Name" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+        <MudTextField @bind-Value="student.Roll" Label="Student Roll" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public Student student { get; set; } = new Student();
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok<Student>(student));
+    }
+}

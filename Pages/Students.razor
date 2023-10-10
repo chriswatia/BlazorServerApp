@@ -1,0 +1,118 @@
+﻿@page "/students"
+
+@using BlazorServerApp.Data
+@inject BlazorServerApp.Services.IStudentService studentService
+@inject MudBlazor.ISnackbar SnackBar
+@inject IDialogService _dialogService;
+
+<MudContainer Class="d-flex justify-end mb-2">
+    <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Large" IconSize="Size.Large" Label="New Student" Class="ma-2" @onclick="(e => CreateAsync())" />
+</MudContainer>
+
+@* <MudTextField @bind-Value="student.Name" Label="Student Name" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+<MudTextField @bind-Value="student.Roll" Label="Student Roll" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+<MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Save">Save</MudButton> *@
+
+<hr />
+<MudTable Items="@GetStudents()" Dense="@dense" Hover="@hover" Filter="new Func<Student, bool>(FilterStudents)" @bind-student="student">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Students</MudText>
+        <MudSpacer />
+        <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Student Id</MudTh>
+        <MudTh>Name</MudTh>
+        <MudTh>Roll</MudTh>
+        <MudTh>Action</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="StudentId">@context.StudentId</MudTd>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Roll">@context.Roll</MudTd>
+        <MudTd DataLabel="">
+            <MudFab @onclick="(e => Edit(context.StudentId))" Color="Color.Primary" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" />
+            <MudFab @onclick="(e => Delete(context.StudentId))" Color="Color.Secondary" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+<MudSwitch @bind-Checked="@hover" Color="Color.Primary">Hover</MudSwitch>
+<MudSwitch @bind-Checked="@dense" Color="Color.Secondary">Dense</MudSwitch>
+@* <MudText Inline="true">Selected: @student?.Name</MudText> *@
+
+
+@code {
+    private bool dense = false;
+    private bool hover = true;
+    private string searchString = "";
+
+    private Student student = new Student();
+    private List<Student> students = new List<Student>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        GetStudents();
+    }
+
+    private List<Student> GetStudents()
+    {
+        students = studentService.GetStudents();
+        return students;
+    }
+    private bool FilterStudents(Student student)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (student.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (student.Roll.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
+    private async Task CreateAsync()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("student", new Student());
+        var dialog = await _dialogService.Show<AddOrUpdateDialog>("Add Student", parameters).Result;
+
+        if (dialog.Data != null)
+        {
+            Student student = dialog.Data as Student;
+            studentService.Save(student);
+            student = new Student();
+            SnackBar.Add("Student Added Successfully!", Severity.Success);
+            GetStudents();
+        }
+    }
+
+    private async Task Edit(int studentId)
+    {
+        var parameters = new DialogParameters();
+        student = students.FirstOrDefault(s => s.StudentId == studentId);
+        parameters.Add("student", student);
+        var dialog = await _dialogService.Show<AddOrUpdateDialog>("Update Student", parameters).Result;
+        if (dialog.Data != null)
+        {
+            var updatedCake = dialog.Data as Student;
+            studentService.Save(student);
+            student = new Student();
+            SnackBar.Add("Student Updated Successfully!", Severity.Success);
+            GetStudents();
+        }
+    }
+
+    
+    private async Task Delete(int studentId)
+    {
+        bool? result = await _dialogService.ShowMessageBox("Delete Student", "Deleting can not be undone!", yesText: "Delete!", cancelText: "Cancel");
+
+        if (result ?? false)
+        {
+            studentService.Delete(studentId);
+            SnackBar.Add("Student Deleted Successfully!", Severity.Warning);
+            GetStudents();
+        }
+        
+    }
+}
