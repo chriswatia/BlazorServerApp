@@ -14,7 +14,7 @@
 <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Save">Save</MudButton> *@
 
 <hr />
-<MudTable Items="@GetStudents()" Dense="@dense" Hover="@hover" Filter="new Func<Student, bool>(FilterStudents)" @bind-student="student">
+<MudTable Items="@GetStudents()" Dense="@dense" Hover="@hover" Bordered="true" Striped="true" Filter="new Func<Student, bool>(FilterStudents)" @bind-student="student">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Students</MudText>
         <MudSpacer />
@@ -45,7 +45,7 @@
 
 
 @code {
-    private bool dense = false;
+    private bool dense = true;
     private bool hover = true;
     private string searchString = "";
 
